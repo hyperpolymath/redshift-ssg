@@ -16,7 +16,13 @@
       (testing ((status . "pending") (completion . 0)))
       (documentation ((status . "in-progress") (completion . 25)))))))
 
-(define blockers-and-issues '((critical ()) (high-priority ())))
+(define blockers-and-issues
+  '((critical ())
+    (high-priority
+     (("CI workflow needs implementation" . "cicd")))
+    (medium-priority
+     (("README content needed" . "documentation")
+      ("Unit tests needed" . "testing")))))
 
 (define critical-next-actions
   '((immediate

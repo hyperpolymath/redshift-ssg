@@ -1,0 +1,852 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
+// SPDX-FileCopyrightText: 2025 Jonathan D.A. Jewell
+= Shift SSG Cookbook
+:toc: left
+:toclevels: 4
+:sectnums:
+:icons: font
+:source-highlighter: rouge
+
+== Overview
+
+This cookbook provides comprehensive command recipes for shift-ssg development, testing, and deployment. All commands are organized by tool and purpose.
+
+[NOTE]
+====
+Commands assume you're in the project root directory (`/home/user/shift-ssg`).
+====
+
+'''
+
+[[cli]]
+== CLI Commands
+
+Direct command-line operations without task runners.
+
+[[cli-deno]]
+=== Deno Runtime
+
+[cols="1,2,1"]
+|===
+|Command |Description |Exit Code
+
+|`deno --version`
+|Check Deno version
+|0
+
+|`deno check adapters/*.js`
+|Type-check all adapters
+|0/1
+
+|`deno fmt adapters/`
+|Format adapter code
+|0
+
+|`deno fmt --check adapters/`
+|Check formatting (no changes)
+|0/1
+
+|`deno lint adapters/`
+|Lint adapter code
+|0/1
+
+|`deno test --allow-all tests/`
+|Run all tests
+|0/1
+
+|`deno test --coverage=coverage/`
+|Run tests with coverage
+|0/1
+
+|`deno coverage coverage/`
+|Display coverage report
+|0
+
+|`deno doc adapters/*.js`
+|Generate documentation
+|0
+
+|`deno run --allow-all src/main.ts`
+|Run main application
+|0/1
+|===
+
+[[cli-deno-permissions]]
+==== Deno Permission Flags
+
+[source,bash]
+----
+# All permissions (development only)
+deno run --allow-all script.ts
+
+# Granular permissions (production)
+deno run \
+  --allow-read=adapters/,src/,tests/ \
+  --allow-write=dist/,coverage/ \
+  --allow-net=localhost:8000 \
+  --allow-env \
+  script.ts
+
+# Permission combinations
+deno run --allow-read --allow-net script.ts
+deno run --allow-read=. --allow-write=dist/ script.ts
+----
+
+[[cli-node]]
+=== Node.js Fallback
+
+[cols="1,2"]
+|===
+|Command |Description
+
+|`node --check adapters/zola.js`
+|Syntax check single adapter
+
+|`for f in adapters/*.js; do node --check "$f"; done`
+|Syntax check all adapters
+
+|`node --experimental-vm-modules adapters/zola.js`
+|Run adapter with ESM support
+|===
+
+[[cli-git]]
+=== Git Operations
+
+[source,bash]
+----
+# Status and diff
+git status
+git diff
+git diff --staged
+git log --oneline -10
+
+# Branching
+git checkout -b feat/new-feature
+git checkout -b fix/issue-123
+git checkout -b docs/update-readme
+
+# Conventional commits
+git commit -m "feat(adapters): add new SSG adapter"
+git commit -m "fix(zola): resolve build timeout issue"
+git commit -m "docs: update cookbook with new recipes"
+git commit -m "test: add E2E tests for MCP protocol"
+git commit -m "chore: update dependencies"
+git commit -m "security: fix XSS vulnerability in output"
+
+# Push with upstream tracking
+git push -u origin feat/new-feature
+----
+
+[[cli-security]]
+=== Security Scanning
+
+[source,bash]
+----
+# Check for secrets
+grep -r "password\s*=" adapters/ src/
+grep -rE "(api[_-]?key|apikey)\s*=" adapters/ src/
+grep -rE "secret\s*=" adapters/ src/
+
+# Check for eval usage
+grep -r "eval(" adapters/ src/
+
+# Check for shell injection risks
+grep -rE "exec\(|spawn\(" adapters/ src/
+
+# Verify no .env committed
+git ls-files | grep -E "\.env"
+----
+
+[[cli-adapters]]
+=== Adapter Operations
+
+[source,bash]
+----
+# Count adapters
+ls -1 adapters/*.js | wc -l
+
+# List adapter names
+ls -1 adapters/*.js | xargs -I{} basename {} .js
+
+# Check specific adapter
+node --check adapters/zola.js
+node --check adapters/hakyll.js
+node --check adapters/mdbook.js
+
+# Validate adapter exports
+grep -l "export const name" adapters/*.js
+grep -l "export const tools" adapters/*.js
+grep -l "export async function connect" adapters/*.js
+
+# Find adapters by language
+grep -l "language = \"Rust\"" adapters/*.js
+grep -l "language = \"Haskell\"" adapters/*.js
+grep -l "language = \"Elixir\"" adapters/*.js
+----
+
+'''
+
+[[just]]
+== Just Recipes
+
+Task automation using https://just.systems/[just].
+
+[[just-core]]
+=== Core Commands
+
+[cols="1,2,1"]
+|===
+|Recipe |Description |Dependencies
+
+|`just`
+|Show all recipes
+|None
+
+|`just check`
+|Syntax check all adapters
+|node
+
+|`just test`
+|Run unit + integration tests
+|deno
+
+|`just test-unit`
+|Run unit tests only
+|deno
+
+|`just test-integration`
+|Run integration tests only
+|deno
+
+|`just test-e2e`
+|Run E2E tests
+|deno
+
+|`just test-all`
+|Run all tests including E2E
+|deno
+|===
+
+[[just-development]]
+=== Development
+
+[cols="1,2"]
+|===
+|Recipe |Description
+
+|`just fmt`
+|Format all source files
+
+|`just lint`
+|Lint all source files
+
+|`just typecheck`
+|Type check TypeScript files
+
+|`just dev`
+|Start development watch mode
+|===
+
+[[just-adapters]]
+=== Adapter Management
+
+[cols="1,2"]
+|===
+|Recipe |Description
+
+|`just adapters-list`
+|List all 28 adapters by category
+
+|`just adapter-check zola`
+|Validate specific adapter
+
+|`just adapter-test hakyll`
+|Test adapter connection
+|===
+
+[[just-build]]
+=== Build & Release
+
+[cols="1,2"]
+|===
+|Recipe |Description
+
+|`just build`
+|Build for production
+
+|`just release v1.0.0`
+|Create release bundle
+
+|`just clean`
+|Clean build artifacts
+|===
+
+[[just-security]]
+=== Security & Quality
+
+[cols="1,2"]
+|===
+|Recipe |Description
+
+|`just audit`
+|Run security audit
+
+|`just deps-check`
+|Check dependency configuration
+
+|`just coverage`
+|Generate coverage report
+|===
+
+[[just-docs]]
+=== Documentation
+
+[cols="1,2"]
+|===
+|Recipe |Description
+
+|`just docs`
+|Generate API documentation
+
+|`just docs-serve`
+|Serve documentation locally
+|===
+
+[[just-cicd]]
+=== CI/CD
+
+[cols="1,2"]
+|===
+|Recipe |Description
+
+|`just ci`
+|Run CI pipeline locally
+
+|`just pre-commit`
+|Pre-commit hook checks
+
+|`just pre-push`
+|Pre-push hook checks
+|===
+
+[[just-composite]]
+=== Composite Workflows
+
+[source,bash]
+----
+# Full setup
+just setup
+
+# Full QA pipeline
+just qa
+
+# Prepare release
+just prepare-release v1.0.0
+
+# Development cycle
+just fmt && just lint && just test
+
+# CI/CD simulation
+just ci && just test-e2e
+----
+
+[[just-permutations]]
+=== Command Combinations
+
+[cols="1,2"]
+|===
+|Combination |Purpose
+
+|`just check lint`
+|Validate syntax and style
+
+|`just fmt check lint`
+|Format, then validate
+
+|`just test coverage`
+|Test with coverage
+
+|`just build test`
+|Build then test
+
+|`just clean build test`
+|Clean rebuild with tests
+
+|`just fmt lint test build`
+|Full development cycle
+
+|`just audit security`
+|Complete security check
+
+|`just docs docs-serve`
+|Generate and serve docs
+|===
+
+'''
+
+[[must]]
+== Mustfile Recipes
+
+Mandatory checks that MUST pass for RSR compliance.
+
+[[must-core]]
+=== Core Must Recipes
+
+[source,bash]
+----
+# Source and run
+source Mustfile && must_build
+source Mustfile && must_test
+source Mustfile && must_lint
+
+# Direct execution
+bash Mustfile build
+bash Mustfile test
+bash Mustfile lint
+bash Mustfile security
+bash Mustfile docs
+bash Mustfile adapters
+----
+
+[[must-cicd]]
+=== CI/CD Must Recipes
+
+[source,bash]
+----
+# Pre-commit
+bash Mustfile pre-commit
+
+# Pre-push
+bash Mustfile pre-push
+
+# Full CI
+bash Mustfile ci
+
+# Complete validation
+bash Mustfile all
+----
+
+'''
+
+[[nickel]]
+== Nickel Formulae
+
+Configuration using https://nickel-lang.org/[Nickel] (when available).
+
+[[nickel-config]]
+=== Configuration Schema
+
+[source,nickel]
+----
+# shift-ssg.ncl
+{
+  project = {
+    name = "shift-ssg",
+    version = "0.1.0",
+    license = "AGPL-3.0-or-later",
+  },
+
+  adapters = {
+    count = 28,
+    runtime = "deno",
+    languages = [
+      "Rust", "Haskell", "Elixir", "Julia",
+      "Clojure", "Racket", "OCaml", "F#",
+      "Scala", "Kotlin", "Nim", "Erlang",
+    ],
+  },
+
+  build = {
+    check = "node --check",
+    test = "deno test --allow-all",
+    lint = "deno lint",
+    fmt = "deno fmt",
+  },
+
+  ci = {
+    required_checks = ["build", "lint", "test", "security"],
+    coverage_minimum = 70,
+  },
+}
+----
+
+[[nickel-validation]]
+=== Validation Contracts
+
+[source,nickel]
+----
+# contracts.ncl
+let AdapterContract = {
+  name | String,
+  language | String,
+  description | String,
+  tools | Array { name | String, description | String },
+}
+
+let ProjectContract = {
+  adapters | Array AdapterContract,
+  version | String | match { s => s =~ "^[0-9]+\\.[0-9]+\\.[0-9]+$" },
+}
+
+in ProjectContract
+----
+
+[[nickel-derivations]]
+=== Build Derivations
+
+[source,nickel]
+----
+# build.ncl
+let config = import "shift-ssg.ncl" in
+
+{
+  commands = {
+    check = "${config.build.check} adapters/*.js",
+    test = "${config.build.test} tests/",
+    lint = "${config.build.lint} adapters/",
+    fmt = "${config.build.fmt} adapters/",
+  },
+
+  ci_pipeline = config.ci.required_checks
+    |> std.array.map (fun cmd => commands."%{cmd}"),
+}
+----
+
+'''
+
+[[permutations]]
+== Command Permutations
+
+Complete reference of command combinations.
+
+[[permutations-development]]
+=== Development Workflows
+
+[source,bash]
+----
+# Quick check
+just check
+
+# Format and check
+just fmt && just check
+
+# Full lint cycle
+just fmt && just lint && just check
+
+# Development with tests
+just fmt && just lint && just test
+
+# Full dev cycle
+just fmt && just lint && just check && just test
+
+# Watch mode development
+just dev &
+just test --watch
+----
+
+[[permutations-testing]]
+=== Testing Combinations
+
+[source,bash]
+----
+# Unit only
+just test-unit
+
+# Integration only
+just test-integration
+
+# E2E only
+just test-e2e
+
+# Unit + Integration
+just test
+
+# All tests
+just test-all
+
+# With coverage
+just test && just coverage
+
+# Specific adapter
+just adapter-test zola
+just adapter-test hakyll
+just adapter-test mdbook
+----
+
+[[permutations-build]]
+=== Build Combinations
+
+[source,bash]
+----
+# Development build
+just build
+
+# Clean build
+just clean && just build
+
+# Production build
+just clean && just build && just test-all
+
+# Release build
+just clean && just build && just test-all && just release v1.0.0
+----
+
+[[permutations-cicd]]
+=== CI/CD Combinations
+
+[source,bash]
+----
+# Pre-commit
+just pre-commit
+# Equivalent: just fmt && just check && just lint
+
+# Pre-push
+just pre-push
+# Equivalent: just ci && just test-e2e
+
+# Full CI
+just ci
+# Equivalent: just check && just lint && just test
+
+# Full QA
+just qa
+# Equivalent: just fmt && just lint && just check && just test && just audit
+
+# Release preparation
+just prepare-release v1.0.0
+# Equivalent: just qa && just test-e2e && just docs
+----
+
+[[permutations-security]]
+=== Security Combinations
+
+[source,bash]
+----
+# Quick audit
+just audit
+
+# Full security check
+just audit && bash Mustfile security
+
+# Security + lint
+just lint && just audit
+
+# Complete security pipeline
+just lint && just audit && bash Mustfile security && just deps-check
+----
+
+'''
+
+[[hooks]]
+== Git Hooks Configuration
+
+[[hooks-pre-commit]]
+=== Pre-commit Hook
+
+[source,bash]
+----
+#!/bin/bash
+# .git/hooks/pre-commit
+
+set -e
+
+echo "🔍 Running pre-commit checks..."
+
+# Format check
+if command -v deno &> /dev/null; then
+    deno fmt --check adapters/ src/ 2>/dev/null || {
+        echo "❌ Formatting issues found. Run: just fmt"
+        exit 1
+    }
+fi
+
+# Lint
+just lint || exit 1
+
+# Security check
+bash Mustfile security || exit 1
+
+echo "✅ Pre-commit checks passed"
+----
+
+[[hooks-pre-push]]
+=== Pre-push Hook
+
+[source,bash]
+----
+#!/bin/bash
+# .git/hooks/pre-push
+
+set -e
+
+echo "🚀 Running pre-push checks..."
+
+# Full CI
+just ci || exit 1
+
+# E2E tests
+just test-e2e || exit 1
+
+echo "✅ Pre-push checks passed"
+----
+
+[[hooks-commit-msg]]
+=== Commit Message Hook
+
+[source,bash]
+----
+#!/bin/bash
+# .git/hooks/commit-msg
+
+commit_msg=$(cat "$1")
+
+# Conventional commits pattern
+pattern="^(feat|fix|docs|style|refactor|test|chore|security)(\([a-z-]+\))?: .+"
+
+if ! echo "$commit_msg" | grep -qE "$pattern"; then
+    echo "❌ Invalid commit message format"
+    echo "Use: <type>(<scope>): <description>"
+    echo "Types: feat, fix, docs, style, refactor, test, chore, security"
+    exit 1
+fi
+----
+
+'''
+
+[[matrix]]
+== Command Matrix
+
+Complete matrix of all commands across tools.
+
+[cols="1,1,1,1"]
+|===
+|Action |CLI |Just |Mustfile
+
+|Syntax check
+|`node --check adapters/*.js`
+|`just check`
+|`bash Mustfile build`
+
+|Run tests
+|`deno test --allow-all tests/`
+|`just test`
+|`bash Mustfile test`
+
+|Format code
+|`deno fmt adapters/`
+|`just fmt`
+|N/A
+
+|Lint code
+|`deno lint adapters/`
+|`just lint`
+|`bash Mustfile lint`
+
+|Security audit
+|`grep -r "password" ...`
+|`just audit`
+|`bash Mustfile security`
+
+|Documentation
+|`deno doc adapters/*.js`
+|`just docs`
+|`bash Mustfile docs`
+
+|Full CI
+|Multiple commands
+|`just ci`
+|`bash Mustfile ci`
+
+|Clean
+|`rm -rf dist/ build/`
+|`just clean`
+|N/A
+|===
+
+'''
+
+[[quickref]]
+== Quick Reference
+
+[[quickref-daily]]
+=== Daily Development
+
+[source,bash]
+----
+# Start of day
+git pull origin main
+just check
+
+# Before commit
+just pre-commit
+
+# Before push
+just pre-push
+----
+
+[[quickref-release]]
+=== Release Checklist
+
+[source,bash]
+----
+# 1. Clean and rebuild
+just clean && just build
+
+# 2. Run all tests
+just test-all
+
+# 3. Security audit
+just audit && bash Mustfile security
+
+# 4. Generate docs
+just docs
+
+# 5. Create release
+just release v1.0.0
+
+# 6. Tag and push
+git tag v1.0.0
+git push origin v1.0.0
+----
+
+[[quickref-troubleshooting]]
+=== Troubleshooting
+
+[source,bash]
+----
+# Check Deno installation
+deno --version
+
+# Check Just installation
+just --version
+
+# Verify adapters
+bash Mustfile adapters
+
+# Full validation
+bash Mustfile all
+
+# Reset to clean state
+just clean
+git checkout -- .
+----
+
+'''
+
+[appendix]
+== Appendix: Tool Installation
+
+[source,bash]
+----
+# Deno
+curl -fsSL https://deno.land/install.sh | sh
+
+# Just
+cargo install just
+# or
+brew install just
+
+# asdf (for version management)
+git clone https://github.com/asdf-vm/asdf.git ~/.asdf
+echo '. "$HOME/.asdf/asdf.sh"' >> ~/.bashrc
+----
